@@ -1,0 +1,88 @@
+<?php
+	session_start();
+	if(!isset($_SESSION['user'])){
+		header('Location:404.php');
+	}
+	$user_id = $_SESSION['user']['id'];
+	
+	if($_SESSION['user']['avatar'] == null){
+		$src = 'images/avatar/'.$_SESSION['user']['gender'].'.jpg';
+	}else {
+		$src = 'uploads/avatars/'.$_SESSION['user']['avatar'];
+	}
+	
+	$result = mysqli_query($con, "SELECT * FROM friends WHERE to_id = '$user_id' AND seen = '0'");
+	$num = mysqli_num_rows($result);
+	$fetch = mysqli_fetch_assoc($result);
+	
+?>
+
+
+<html>
+	<head>
+		<link rel = "stylesheet" href = "css/bootstrap.min.css" />
+		<link rel = "stylesheet" href = "css/all.css" />
+		<link rel = "stylesheet" href = "css/style.css" />
+	</head>
+	<body>
+		<div class = "container header">
+			<div class = "row for_height">
+				<nav class="navbar navbar-expand-lg navbar-light bg-light p-0 fixed-top">
+				  <div class="container-fluid justify-content-between">
+                      <div>
+                          <a class="navbar-brand" href="home.php">
+                              <div class = "d-flex">
+                                  <div class = "pt-1">
+                                      <img src = "<?= $src; ?>" title = "avatar" alt = "avatar_image" class = "avatar_image ">
+                                  </div>
+                                  <div class = "px-2">
+                                      <h5 style = "line-height:70px"><?= $_SESSION['user']['first_name'].' '.$_SESSION['user']['last_name']; ?></h5>
+                                  </div>
+                              </div>
+                          </a>
+                      </div>
+
+					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					  <span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+                        <div class = "position-relative">
+                            <input class="form-control mx-5 search_people" id="search" type="search" placeholder="Search People" aria-label="Search">
+							<div class="position-absolute search_result">
+								<table id="output">
+								
+								</table>
+							</div>
+                        </div>
+					    <div>
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+								<li class = "position-relative">
+									<span class = "seen"><?=$num; ?></span>
+									<div class="notification position-absolute">
+										<p>this people wants to be friends with you</p>
+									</div>
+								</li>
+								</li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="page" href="home.php">Home</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="my_posts.php">My Posts</a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Settings
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                        <li><a class="dropdown-item" href="account_settings.php">Account Settings</a></li>
+                                        <li><a class="dropdown-item" href="logout.php"><span>Logout</span>&nbsp;<i class="fa-solid fa-arrow-right-from-bracket"></i> </a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+					</div>
+				  </div>
+				</nav>
+			</div>
+		</div>
+		

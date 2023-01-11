@@ -1,0 +1,90 @@
+<?php 
+
+	require_once 'connect.php';
+	require 'header.php';
+	require_once 'functions.php';
+	
+	
+	if(isset($_GET['user_id'])){
+		$user_id = $_GET['user_id'];
+		if(is_numeric($user_id)){
+			$select = mysqli_query($con,"SELECT * FROM users WHERE id='$user_id'");
+			if(mysqli_num_rows($select)>0){
+				$fetch = mysqli_fetch_assoc($select);
+			}else{
+				header("Location: 404.php");
+			}
+		}else{
+			header("Location: 404.php");
+		}
+	}else{
+		header("Location: 404.php");
+	}
+	
+	if($fetch['avatar'] == null){
+		$src = 'images/avatar/'.$fetch['gender'].'.jpg';
+	}else {
+		$src = 'uploads/avatars/'.$fetch['avatar'];
+	}
+	
+	$session_id = $_SESSION['user']['id'];
+	$guest_id = $fetch['id'];
+	$select = mysqli_query($con, "SELECT * FROM friends WHERE from_id = '$session_id' AND to_id = '$guest_id' OR from_id = '$guest_id' AND to_id = '$session_id'");
+	if(mysqli_num_rows($select)==0){
+		$friends_request_btn = '<button  data-from_id = "'.$session_id.'" data-to_id ="'.$guest_id.'" data-key = "add_friend" class="btn friend btn-success">Add friend</button>';
+	}else if(mysqli_num_rows($select)>0){ 
+		$friends_fetch = mysqli_fetch_assoc($select);
+		if($friends_fetch['to_id'] == $session_id){
+			$friends_request_btn = '<button  data-from_id = "'.$guest_id.'" data-to_id ="'.$session_id.'" data-key = "remove_friend" class="btn friend btn-success">Accept</button><button  data-from_id = "'.$session_id.'" data-to_id ="'.$guest_id.'" data-key = "remove_friend" class="btn friend btn-danger">Decline</button>';
+		}
+		else if($friends_fetch['from_id'] == $session_id){
+			if($friends_fetch['status']==0){
+			$friends_request_btn = '<button  data-from_id = "'.$session_id.'" data-to_id ="'.$guest_id.'" data-key = "remove_request" class="btn friend btn-secondary">Remove Request</button>';
+			}else if($friends_fetch['status']==1){
+				$friends_request_btn = '<button  data-from_id = "'.$session_id.'" data-to_id ="'.$guest_id.'" data-key = "remove_friend" class="btn friend btn-success">Remove Friend</button>';
+			}
+		}
+		
+		
+	}
+													
+?>
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+<div class = "container">
+		<div class = "row">
+			<div class = "col-lg-3">
+				<div class = "home_fixed"></div>
+			</div>
+			<div class = "col-lg-6">
+			<div class="panel panel-white profile-widget">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="image-container bg2" style="background:url(http://www.bootdey.com/img/Content/flores-amarillas-wallpaper.jpeg)">  
+							<img src="<?= $src ?>" class="avatar" alt="avatar"> 
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="details">
+							<h4><?= $fetch['first_name']?> <?= $fetch['last_name']?><i class="fa fa-sheild"></i></h4>
+							<div>Works at Bootdey.com</div>
+							<div>Attended University of Bootdey</div>
+							<div>Lives in Medellin, Colombia</div>
+							<div class="mg-top-10 friend_div">
+								<?= $friends_request_btn ?>
+							</div>
+						</div>
+					</div>
+					 
+				</div>
+			</div>
+			
+			</div>
+			<div class = "col-lg-3">
+				<div class = "home_fixed"></div>
+			</div>
+		</div>
+	</div>
+
+<?php
+	require 'footer.php';
+?>

@@ -1,0 +1,139 @@
+<?php
+	require "header.php";
+	require "functions.php";
+
+    $first_name = $last_surname = $email = '';
+    $error_message = '';
+    $file_name = $_SESSION['user']['avatar'];
+    $user_id = $_SESSION['user']['id'];
+
+	if(isset($_POST['edit_profile'])){
+		$empty_keys = [];
+		foreach($_POST as $key=>$value){
+            if($key == 'password'){
+                $$key = md5(cleanPosts($value));
+            }else {
+                $$key = cleanPosts($value);
+            }
+			if(empty($value)){
+				$empty_keys[$key] = $value;
+			}
+		}
+        unset($empty_keys['avatar'],$empty_keys['edit_profile'],$empty_keys['password']);
+        if(count($empty_keys) > 0){
+            $error_message =    '<div class="alert alert-danger" role="alert">
+                                   Please, Fill All Fields!
+                                </div>';
+        }else {
+            if($_FILES['avatar']['name'] != ''){
+                $allowed_exts = ['jpg','jpeg','png','gif','webp'];
+                $extension = get_file_format($_FILES['avatar']['name']);
+                if(in_array($extension, $allowed_exts)){
+                    $file_name = change_file_name().'.'.$extension;
+                    move_uploaded_file($_FILES['avatar']['tmp_name'], 'uploads/avatars/'.$file_name);
+                }else {
+                    $error_message =    '<div class="alert alert-danger" role="alert">
+                                   File Type Is Not Correct
+                                </div>';
+                }
+            }
+            if(empty($password)){
+                $password = $_SESSION['user']['password'];
+            }
+
+            $update = mysqli_query($con, "UPDATE users SET
+                                                       first_name = '$first_name',
+                                                       last_name  = '$last_name',
+                                                       email      = '$email',
+                                                       password   = '$password',
+                                                       gender     = '$gender',
+                                                       avatar     = '$file_name'
+                                     WHERE id = '$user_id'");
+            if($update){
+                $result = mysqli_query($con, "SELECT * FROM users WHERE id = '$user_id'");
+                $_SESSION['user'] = mysqli_fetch_assoc($result);
+                $_SESSION['edit_success'] =    '<div class="alert alert-success for_hide" role="alert">
+                                   Edit Has Successfully Done
+                                </div>';
+				header('Location: /social/account_settings.php');
+            }
+            
+        }
+		
+
+		
+	}
+
+?>
+		<div class = "container mt-5">
+            <div class="row">
+                <form action = "" method = "post" enctype = "multipart/form-data" class = "user_edit_profile_form">
+                    <div class="row mt-3">
+                        <div class="col-lg-4 col-md-4 col-sm-12">
+                            <div class = "">
+                                <img src = "<?= $src; ?>" title = "avatar" alt = "avatar" class = "user_avatar_edit">
+                            </div>
+                            <div class="mt-2">
+                                <input type="file"  name = "avatar" class="form-control w-100" id="profile_image" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                            </div>
+                            <div class="remove_avatar_btn_content">
+                                <?= ($_SESSION['user']['avatar'] != null) ? '<div class = "mt-4"><button data-id = "'.$_SESSION['user']['id'].'" type="button" class="btn btn-outline-danger d-block w-100 show_modal" data-bs-toggle="modal" data-bs-target="#yes_no" >Remove Profile Image</button></div>' : ''; ?>
+                            </div>
+
+                            <div class = "profile_error_message mt-3"></div>
+                        </div>
+                        <div class = "col-lg-8 col-md-8 col-sm-12">
+                            <div class = "row mt-3">
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="profile_name" class="form-label">Name</label>
+                                    <input type="text" class="form-control <?= (isset($_POST['edit_profile']) && $first_name === '') ? 'border-danger' : ''; ?>" name = "first_name" id="profile_name" value = "<?= (isset($_POST['edit_profile'])) ? $first_name :  $_SESSION['user']['first_name']; ?>">
+                                </div>
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="profile_surname" class="form-label">Surname</label>
+                                    <input type="text" class="form-control <?= (isset($_POST['edit_profile']) && $last_name === '') ? 'border-danger' : ''; ?>" name = "last_name" id="profile_surname" value = "<?= (isset($_POST['edit_profile'])) ? $last_name : $_SESSION['user']['last_name']; ?>">
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="profile_email" class="form-label">Email Address</label>
+                                    <input type="text" class="form-control <?= (isset($_POST['edit_profile']) && $email === '') ? 'border-danger' : ''; ?>" name = "email" id="profile_email" value = "<?= (isset($_POST['edit_profile'])) ? $email : $_SESSION['user']['email']; ?>">
+                                </div>
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="profile_pass" class="form-label">Password</label>
+                                    <input type="password" name = "password" class="form-control" id="profile_pass">
+                                </div>
+                            </div>
+                            <div class="form-check form-check-inline mt-3">
+                                <input class="form-check-input" type="radio" name="gender" id = "male" value="male" <?= ($_SESSION['user']['gender'] == 'male') ? 'checked' : ''; ?> />
+                                <label class="form-check-label" for="male">Male</label>
+                            </div>
+                            <div class="form-check form-check-inline mt-3">
+                                <input class="form-check-input" type="radio" name="gender" id = "female" value="female" <?= ($_SESSION['user']['gender'] == 'female') ? 'checked' : ''; ?> />
+                                <label class="form-check-label" for="female">FeMale</label>
+                            </div>
+                            <div class="col-lg-12 col-md-12 text-end mt-3">
+                                <button type="submit" class="btn btn-outline-success d-block w-100" name = "edit_profile">Edit Profile Info</button>
+                            </div>
+                            <div class = "col-lg-12 mt-3">
+                                <?= $error_message ?>
+                                <?= (isset($_SESSION['edit_success'])) ? $_SESSION['edit_success'] : ''; ?>
+								
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+	    </div>
+
+
+
+<?php
+	if(!isset($_POST['edit_profile'])){
+		unset($_SESSION['edit_success']);
+		
+	}
+	
+    
+	require "footer.php";
+?>
